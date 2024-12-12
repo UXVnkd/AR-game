@@ -49,20 +49,18 @@
       #start-button:hover {
         background-color: #45a049;
       }
-      #acknowledgment {
+      #interaction-prompt {
         position: fixed;
-        top: 50%;
+        bottom: 20px;
         left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: #4caf50;
+        transform: translateX(-50%);
+        background-color: rgba(0,0,0,0.7);
         color: white;
-        padding: 20px;
-        font-size: 20px;
+        padding: 10px 20px;
         border-radius: 10px;
         display: none;
         z-index: 100;
         text-align: center;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
       #compass {
         position: fixed;
@@ -114,7 +112,9 @@
       <p id="status-message">Press Start to begin navigation.</p>
       <button id="start-button" onclick="requestPermissionsAndStartGame()">Start Navigation</button>
     </div>
-    <div id="acknowledgment">You've reached your destination!</div>
+    <div id="interaction-prompt">
+      Tap the model to continue to the next page!
+    </div>
     <div id="destination-arrow"></div>
     <div id="compass">
       <div id="compass-pointer"></div>
@@ -128,7 +128,9 @@
         id="target-model-entity"
         gltf-model="#target-model"
         scale="1 1 1"
-        gps-entity-place>
+        gps-entity-place
+        visible="false"
+        animation-mixer>
       </a-entity>
       <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
@@ -146,6 +148,8 @@
       let watchId = null;
       let currentHeading = 0;
       let currentLocation = null;
+      const CLOSE_DISTANCE = 5; // Distance in meters to consider "close" to the model
+      const INTERACTION_DISTANCE = 2; // Distance in meters to show interaction prompt
 
       function requestPermissionsAndStartGame() {
         // Request location permission
@@ -196,6 +200,14 @@
           timeout: 20000,
           maximumAge: 0,
         });
+
+        // Add click event listener for model interaction
+        modelEntity.addEventListener('click', handleModelInteraction);
+      }
+
+      function handleModelInteraction() {
+        // Navigate to the next page when model is clicked
+        window.location.href = 'second-page.html';
       }
 
       function initDeviceOrientation() {
@@ -258,9 +270,18 @@
 
         updateUI(distance, bearing);
 
-        if (distance < 2) {
-          document.getElementById("acknowledgment").style.display = "block";
-          stopGame();
+        // Show model when close to target location
+        const modelEntity = document.getElementById("target-model-entity");
+        if (distance <= CLOSE_DISTANCE) {
+          modelEntity.setAttribute('visible', 'true');
+        }
+
+        // Show interaction prompt when very close
+        const interactionPrompt = document.getElementById("interaction-prompt");
+        if (distance <= INTERACTION_DISTANCE) {
+          interactionPrompt.style.display = "block";
+        } else {
+          interactionPrompt.style.display = "none";
         }
       }
 
